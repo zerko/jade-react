@@ -269,6 +269,7 @@ Compiler = (node, options) ->
       Code: visitCode
       Doctype: -> throw new Error('Component may not have doctype tag')
       Comment: -> SKIP_NODE
+      BlockComment: -> SKIP_NODE
 
     indentToDepth = ->
       return '' unless pretty
