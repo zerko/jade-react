@@ -46,6 +46,8 @@ joinArrays = (expression) ->
   else
     expression
 
+SKIP_NODE = {}
+
 Compiler = (node, options) ->
   compile: ->
     # Setup
@@ -94,7 +96,10 @@ Compiler = (node, options) ->
 
       for node, i in node.block.nodes
 
-        visit(node)
+        if visit(node) == SKIP_NODE
+          if i + 1 == len
+            unbufferLastExpression()
+          continue
 
         if i + 1 < len
           if pretty
@@ -263,6 +268,7 @@ Compiler = (node, options) ->
       Each: visitEach
       Code: visitCode
       Doctype: -> throw new Error('Component may not have doctype tag')
+      Comment: -> SKIP_NODE
 
     indentToDepth = ->
       return '' unless pretty
@@ -275,6 +281,7 @@ Compiler = (node, options) ->
 
     # Open render function body
     bufferExpression = (strs...) -> parts = parts.concat(strs)
+    unbufferLastExpression = -> parts.pop()
     visit = (node) -> visitNodes[node.type](node)
     visit(node)
 
