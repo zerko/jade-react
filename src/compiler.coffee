@@ -58,11 +58,16 @@ Compiler = (node, options) ->
     seenDepth0        = false
     needsMap          = false
     continueIndenting = false
+    locals            = {}
+    hasLocals         = false
 
     visitTag = (tag) ->
       bufferExpression(indentToDepth())
       if React.DOM[tag.name]
         bufferExpression('React.DOM.')
+      else
+        locals[tag.name] = 1
+        hasLocals = true
       bufferExpression(tag.name, '(')
 
       visitAttributes(tag.attrs, tag.attributeBlocks)
@@ -291,12 +296,22 @@ Compiler = (node, options) ->
       parts.unshift '  return '
       if needsMap
         parts.unshift prettyMap
-      parts.unshift 'function () {\n'
+      if hasLocals
+          for key, item of locals
+            parts.unshift 'var ' + key + ' = deps.' + key + '\n;'
+            parts.unshift 'function (deps) {\n'
+      else
+        parts.unshift 'function () {\n'
     else
       parts.unshift 'return '
       if needsMap
         parts.unshift terseMap
-      parts.unshift 'function(){'
+      if hasLocals
+        for key, item of locals
+          parts.unshift 'var ' + key + ' = deps.' + key + ';'
+        parts.unshift 'function(deps){'
+      else
+        parts.unshift 'function(){'
 
     if pretty
       bufferExpression(';\n}\n')
